@@ -144,7 +144,10 @@ st.markdown("<br>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.image("logo.png", width=700)
-    st.sidebar.image("второе_фото.jpg", width=500)
+# Второе фото
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("второе_фото.jpg", width=400)
 
 if uploaded_file is not None:
     try:
