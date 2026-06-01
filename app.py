@@ -112,7 +112,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Фото по центру
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("logo.png", width=1200)
+    st.image("logo.png", width=999)
 
 if uploaded_file is not None:
     try:
