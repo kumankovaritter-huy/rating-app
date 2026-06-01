@@ -90,7 +90,7 @@ import streamlit as st
 st.markdown("""
 <style>
 .main .block-container {
-    max-width: 900px;
+    max-width: 1200px !important;
     padding-top: 2rem;
 }
 h1 {
@@ -98,16 +98,35 @@ h1 {
     font-size: 2.2rem !important;
 }
 
-/* Стилизация кнопки загрузки */
-.stFileUploader > div > div {
-    background-color: #1a1a2e;
-    border: 2px dashed #4a4a6a;
-    border-radius: 12px;
-    padding: 20px;
+/* Улучшенная кнопка загрузки */
+.stFileUploader > div:first-child {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 2px solid #4a4a6a;
+    border-radius: 16px;
+    padding: 24px 32px;
+    transition: all 0.3s ease;
 }
-.stFileUploader > div > div:hover {
+
+.stFileUploader > div:first-child:hover {
     border-color: #ff6b35;
-    background-color: #16213e;
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.2);
+    transform: translateY(-2px);
+}
+
+.stFileUploader button {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    padding: 12px 28px !important;
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4) !important;
+}
+
+.stFileUploader button:hover {
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6) !important;
+    transform: translateY(-2px) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -121,10 +140,10 @@ uploaded_file = st.file_uploader("", type=['csv', 'xlsx'], label_visibility="col
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Фото больше и по центру
+# Фото по центру
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("logo.png", width=600)
+    st.image("logo.png", width=700)
 
 if uploaded_file is not None:
     try:
