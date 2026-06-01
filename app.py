@@ -145,9 +145,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.image("logo.png", width=700)
 # Второе фото
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.image("второе_фото.jpg", width=400)
+st.sidebar.image("второе_фото.png", width=200)
 
 if uploaded_file is not None:
     try:
