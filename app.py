@@ -87,7 +87,6 @@ def get_recommendation(row):
 # ==================== ИНТЕРФЕЙС ====================
 import streamlit as st
 
-# Стили
 st.markdown("""
 <style>
 .main .block-container {
@@ -101,21 +100,19 @@ h1 {
 </style>
 """, unsafe_allow_html=True)
 
-# Заголовок
 st.markdown("<h1>Автоматизация отбора артикулов для работы с рейтингом</h1>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: center; font-size: 2rem; margin-top: -10px;'>⚡</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Кнопка загрузки (без текста)
 uploaded_file = st.file_uploader("", type=['csv', 'xlsx'], label_visibility="collapsed")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Фото по центру
-st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-st.image("logo.png", width=400)
-st.markdown("</div>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("logo.png", width=800)
 
 if uploaded_file is not None:
     try:
