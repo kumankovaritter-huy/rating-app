@@ -85,12 +85,27 @@ def get_recommendation(row):
     return "✅ Стандартная проработка"
 
 # ==================== ИНТЕРФЕЙС ====================
-st.set_page_config(page_title="Аналитика Рейтингов 4.5+", layout="wide")
+import streamlit as st
+
+# Центрирование через CSS
+st.markdown("""
+<style>
+.main .block-container {
+    max-width: 800px;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("⚡ Автоматизация отбора артикулов для работы с рейтингом")
-st.caption("Цель: 4.5+ на всех площадках | Чёрный список: " + str(len(BLACKLIST)) + " артикулов")
+st.caption("Цель: 4.5+ на всех площадках | Чёрный список: 116 артикулов")
+
+st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+st.image("logo.png", width=400)
+st.markdown("</div>", unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader("📁 Загрузите еженедельный отчет (CSV или Excel)", type=['csv', 'xlsx'])
-st.image("logo.png", width=1000)
 
 if uploaded_file is not None:
     try:
