@@ -90,7 +90,7 @@ st.title("⚡ Автоматизация отбора артикулов для 
 st.caption("Цель: 4.5+ на всех площадках | Чёрный список: " + str(len(BLACKLIST)) + " артикулов")
 
 uploaded_file = st.file_uploader("📁 Загрузите еженедельный отчет (CSV или Excel)", type=['csv', 'xlsx'])
-st.image("photo.jpg", width=150)
+st.image("logo.png", width=300)
 
 if uploaded_file is not None:
     try:
