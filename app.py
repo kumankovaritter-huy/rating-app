@@ -90,7 +90,7 @@ import streamlit as st
 st.markdown("""
 <style>
 .main .block-container {
-    max-width: 900px;
+    max-width: 1200px;
     padding-top: 2rem;
 }
 h1 {
