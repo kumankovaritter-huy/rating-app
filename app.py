@@ -87,25 +87,31 @@ def get_recommendation(row):
 # ==================== ИНТЕРФЕЙС ====================
 import streamlit as st
 
-# Центрирование через CSS
+# Стили для центрирования
 st.markdown("""
 <style>
 .main .block-container {
-    max-width: 800px;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    max-width: 900px;
+    padding-top: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("⚡ Автоматизация отбора артикулов для работы с рейтингом")
-st.caption("Цель: 4.5+ на всех площадках | Чёрный список: 116 артикулов")
+# Заголовок по центру
+st.markdown("<h1 style='text-align: center;'>⚡ Автоматизация отбора артикулов для работы с рейтингом</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888;'>Цель: 4.5+ на всех площадках | Чёрный список: 116 артикулов</p>", unsafe_allow_html=True)
 
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Кнопка загрузки по центру
+uploaded_file = st.file_uploader("📁 Загрузите еженедельный отчет (CSV или Excel)", type=['csv', 'xlsx'])
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Фото по центру под кнопкой
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image("logo.png", width=400)
 st.markdown("</div>", unsafe_allow_html=True)
-
-uploaded_file = st.file_uploader("📁 Загрузите еженедельный отчет (CSV или Excel)", type=['csv', 'xlsx'])
 
 if uploaded_file is not None:
     try:
