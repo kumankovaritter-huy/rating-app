@@ -90,12 +90,24 @@ import streamlit as st
 st.markdown("""
 <style>
 .main .block-container {
-    max-width: 1200px;
+    max-width: 900px;
     padding-top: 2rem;
 }
 h1 {
     text-align: center;
     font-size: 2.2rem !important;
+}
+
+/* Стилизация кнопки загрузки */
+.stFileUploader > div > div {
+    background-color: #1a1a2e;
+    border: 2px dashed #4a4a6a;
+    border-radius: 12px;
+    padding: 20px;
+}
+.stFileUploader > div > div:hover {
+    border-color: #ff6b35;
+    background-color: #16213e;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -109,10 +121,10 @@ uploaded_file = st.file_uploader("", type=['csv', 'xlsx'], label_visibility="col
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Фото по центру
+# Фото больше и по центру
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("logo.png", width=999)
+    st.image("logo.png", width=900)
 
 if uploaded_file is not None:
     try:
