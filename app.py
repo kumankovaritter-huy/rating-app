@@ -87,28 +87,32 @@ def get_recommendation(row):
 # ==================== ИНТЕРФЕЙС ====================
 import streamlit as st
 
-# Стили для центрирования
+# Стили
 st.markdown("""
 <style>
 .main .block-container {
     max-width: 900px;
-    padding-top: 1rem;
+    padding-top: 2rem;
+}
+h1 {
+    text-align: center;
+    font-size: 2.2rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Заголовок по центру
-st.markdown("<h1 style='text-align: center;'>⚡ Автоматизация отбора артикулов для работы с рейтингом</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #888;'>Цель: 4.5+ на всех площадках | Чёрный список: 116 артикулов</p>", unsafe_allow_html=True)
+# Заголовок
+st.markdown("<h1>Автоматизация отбора артикулов для работы с рейтингом</h1>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; font-size: 2rem; margin-top: -10px;'>⚡</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Кнопка загрузки по центру
-uploaded_file = st.file_uploader("📁 Загрузите еженедельный отчет (CSV или Excel)", type=['csv', 'xlsx'])
+# Кнопка загрузки (без текста)
+uploaded_file = st.file_uploader("", type=['csv', 'xlsx'], label_visibility="collapsed")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Фото по центру под кнопкой
+# Фото по центру
 st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image("logo.png", width=400)
 st.markdown("</div>", unsafe_allow_html=True)
