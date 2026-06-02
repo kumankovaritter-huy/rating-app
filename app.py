@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import io
 import os
+import math
 
 # ==================== НАСТРОЙКИ ====================
 VALID_PLATFORMS = [
@@ -89,6 +90,25 @@ def get_recommendation(row):
     if pd.notna(rating) and rating < 4.0 and pd.notna(reviews) and reviews >= 10:
         return "📅 Долгосрочная работа: 3-5 отзывов постепенно"
     return "✅ Стандартная проработка"
+
+def calculate_needed_fives(row):
+    rating = row['Рейтинг_число']
+    reviews = row['Отзывы_число']
+    
+    if pd.isna(rating) or pd.isna(reviews):
+        return 0
+    
+    if rating < 4.0:
+        needed = math.ceil(reviews * (4 - rating))
+        return max(needed, 1)
+    else:
+        if reviews == 1:
+            if rating >= 4.9:
+                return 1
+            else:
+                return 2
+        else:
+            return 1
 
 # ==================== ИНТЕРФЕЙС ====================
 st.set_page_config(page_title="Аналитика Рейтингов 4.5+", layout="wide")
@@ -228,6 +248,7 @@ if uploaded_file is not None:
 
                     final_df = df_problems.head(100).copy()
                     final_df['Рекомендация'] = final_df.apply(get_recommendation, axis=1)
+                    final_df['В общем нужно'] = final_df.apply(calculate_needed_fives, axis=1)
 
                     # ==================== ДАШБОРД ====================
                     st.markdown("---")
@@ -250,16 +271,17 @@ if uploaded_file is not None:
                     st.subheader("📋 План работы")
 
                     display_cols = [
-                        'Артикул поставщика',   # 1. Артикул
-                        'Площадка',             # 2. Площадка
-                        'Ссылка',               # 3. Ссылка на площадку
-                        'Наименование',         # 4. Наименование
-                        'Статус',               # 5. Статус
-                        'Рейтинг',              # 6. Рейтинг
-                        'Кол-во отзывов',       # 7. Кол-во отзывов
-                        'Приоритет',            # 8. Приоритет
-                        'Сезонный',             # 9. Сезонный
-                        'Рекомендация'          # 10. Рекомендация
+                        'Артикул поставщика',
+                        'Площадка',
+                        'Ссылка',
+                        'Наименование',
+                        'Статус',
+                        'Рейтинг',
+                        'Кол-во отзывов',
+                        'Приоритет',
+                        'Сезонный',
+                        'Рекомендация',
+                        'В общем нужно'
                     ]
                     output_df = final_df[display_cols].copy()
 
