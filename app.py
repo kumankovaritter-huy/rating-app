@@ -60,7 +60,6 @@ def check_status(status):
         return True
     return True
 
-# НОВАЯ ФУНКЦИЯ: проверка на "Распродажа и вывод"
 def is_clearance(status):
     if pd.isna(status):
         return False
@@ -71,24 +70,15 @@ def get_priority(row):
     rating = row['Рейтинг_число']
     prev_rating = row['Предыдущий_рейтинг_число']
     reviews = row['Отзывы_число']
-    clearance = row.get('is_clearance', False)
     
-    # Приоритет 1: низкий рейтинг
     if pd.notna(rating) and rating <= 3.9:
         return 1
-    
-    # Приоритет 2: спад рейтинга
     if pd.notna(rating) and rating >= 4.0 and pd.notna(prev_rating) and rating < prev_rating:
         return 2
-    
-    # Приоритет 3: ≤4.5 + мало отзывов (теперь < 3)
     if pd.notna(rating) and rating <= 4.5 and (pd.isna(reviews) or reviews < 3):
         return 3
-    
-    # Приоритет 4: риск/сезон
     if (pd.isna(rating) or rating > 4.3) and (pd.isna(reviews) or reviews <= 1):
         return 4
-    
     return 99
 
 def get_recommendation(row):
@@ -150,7 +140,6 @@ uploaded_file = st.file_uploader("", type=['csv', 'xlsx'], label_visibility="col
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Два фото рядом
 col1, col2 = st.columns(2)
 with col1:
     st.image("logo.png", width=500)
@@ -186,23 +175,14 @@ if uploaded_file is not None:
                 df['Рейтинг_число'] = df['Рейтинг'].apply(clean_numeric)
                 df['Отзывы_число'] = df['Кол-во отзывов'].apply(clean_numeric)
                 df['Предыдущий_рейтинг_число'] = df['Предыдущий рейтинг'].apply(clean_numeric)
-                
-                # НОВАЯ КОЛОНКА: является ли статус "Распродажа и вывод"
                 df['is_clearance'] = df['Статус'].apply(is_clearance)
 
-                # Фильтрация по статусу
                 df_filtered = df[df['Статус'].apply(check_status)].copy()
-                
-                # Фильтрация по площадкам
                 df_filtered = df_filtered[df_filtered['Площадка'].astype(str).str.strip().str.lower().isin(VALID_PLATFORMS)]
-                
-                # Фильтрация по чёрному списку
                 df_filtered = df_filtered[~df_filtered['Артикул поставщика'].isin(BLACKLIST)]
 
-                # НОВАЯ ФИЛЬТРАЦИЯ: для "Распродажа и вывод" — только если отзывы ≤ 2
                 def should_include_clearance(row):
                     if row['is_clearance']:
-                        # Если это распродажа — берём только если отзывы ≤ 2 и рейтинг низкий
                         reviews = row['Отзывы_число']
                         rating = row['Рейтинг_число']
                         if pd.notna(reviews) and reviews > 2:
@@ -213,25 +193,21 @@ if uploaded_file is not None:
 
                 df_filtered = df_filtered[df_filtered.apply(should_include_clearance, axis=1)]
 
-                # Приоритеты
                 df_filtered['Приоритет'] = df_filtered.apply(get_priority, axis=1)
                 df_problems = df_filtered[df_filtered['Приоритет'] <= 4].copy()
 
                 if df_problems.empty:
                     st.warning("⚠️ Проблемных артикулов не обнаружено.")
                 else:
-                    # Группировка по артикулу
                     sku_priority = df_problems.groupby('Артикул поставщика')['Приоритет'].min().reset_index()
                     sku_priority.rename(columns={'Приоритет': 'Финальный_Приоритет'}, inplace=True)
                     df_problems = df_problems.merge(sku_priority, on='Артикул поставщика')
                     df_problems['Приоритет'] = df_problems['Финальный_Приоритет']
 
-                    # Сезонность
                     df_problems['Сезонный'] = df_problems['Наименование'].astype(str).str.lower().apply(
                         lambda name: any(kw in name for kw in SEASONAL_KEYWORDS)
                     )
 
-                    # Сортировка приоритета 4
                     def get_sort_key(row):
                         if row['Приоритет'] != 4:
                             return 0
@@ -244,17 +220,13 @@ if uploaded_file is not None:
 
                     df_problems['Сортировка_4'] = df_problems.apply(get_sort_key, axis=1)
 
-                    # Сортировка
                     df_problems.sort_values(
                         by=['Приоритет', 'Сортировка_4', 'Рейтинг_число'], 
                         ascending=[True, True, True], 
                         inplace=True
                     )
 
-                    # НОВЫЙ ЛИМИТ: максимум 100 проблемных площадок (не уникальных артикулов)
                     final_df = df_problems.head(100).copy()
-
-                    # Рекомендации
                     final_df['Рекомендация'] = final_df.apply(get_recommendation, axis=1)
 
                     # ==================== ДАШБОРД ====================
@@ -277,19 +249,18 @@ if uploaded_file is not None:
                     st.markdown("---")
                     st.subheader("📋 План работы")
 
-                    # Новая структура таблицы (9 столбцов)
-display_cols = [
-    'Артикул поставщика',      # 1. Артикул
-    'Площадка',                # 2. Площадка
-    'Ссылка',                  # 3. Ссылка на площадку
-    'Рейтинг',                 # 4. Рейтинг
-    'Кол-во отзывов',          # 5. Кол-во отзывов
-    'Наименование',            # 6. Наименование
-    'Приоритет',               # 7. Приоритет
-    'Сезонный',                # 8. Сезонный
-    'Рекомендация'             # 9. Рекомендация
-]
-output_df = final_df[display_cols].copy()
+                    display_cols = [
+                        'Артикул поставщика',
+                        'Площадка',
+                        'Ссылка',
+                        'Рейтинг',
+                        'Кол-во отзывов',
+                        'Наименование',
+                        'Приоритет',
+                        'Сезонный',
+                        'Рекомендация'
+                    ]
+                    output_df = final_df[display_cols].copy()
 
                     def add_color_emoji(p):
                         if p == 1:
@@ -306,7 +277,6 @@ output_df = final_df[display_cols].copy()
 
                     st.dataframe(output_df, use_container_width=True, height=600)
 
-                    # Кнопка скачивания
                     buffer = io.BytesIO()
                     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                         output_df.to_excel(writer, index=False, sheet_name='План Отзывов')
