@@ -176,7 +176,7 @@ if uploaded_file is not None:
 
         df.columns = df.columns.astype(str).str.strip()
 
-        required_cols = ['Артикул поставщика', 'Статус', 'Площадка', 'Рейтинг', 'Кол-во отзывов', 'Предыдущий рейтинг', 'Наименование']
+        required_cols = ['Артикул поставщика', 'Статус', 'Площадка', 'Ссылка', 'Рейтинг', 'Кол-во отзывов', 'Предыдущий рейтинг', 'Наименование']
         missing_cols = [col for col in required_cols if col not in df.columns]
 
         if missing_cols:
@@ -277,8 +277,19 @@ if uploaded_file is not None:
                     st.markdown("---")
                     st.subheader("📋 План работы")
 
-                    display_cols = required_cols + ['Приоритет', 'Сезонный', 'Рекомендация']
-                    output_df = final_df[display_cols].copy()
+                    # Новая структура таблицы (9 столбцов)
+display_cols = [
+    'Артикул поставщика',      # 1. Артикул
+    'Площадка',                # 2. Площадка
+    'Ссылка',                  # 3. Ссылка на площадку
+    'Рейтинг',                 # 4. Рейтинг
+    'Кол-во отзывов',          # 5. Кол-во отзывов
+    'Наименование',            # 6. Наименование
+    'Приоритет',               # 7. Приоритет
+    'Сезонный',                # 8. Сезонный
+    'Рекомендация'             # 9. Рекомендация
+]
+output_df = final_df[display_cols].copy()
 
                     def add_color_emoji(p):
                         if p == 1:
