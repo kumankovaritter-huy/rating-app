@@ -17,11 +17,11 @@ SEASONAL_KEYWORDS = [
     'ручной', 'перчатка', 'перчатки', 'фонарь'
 ]
 
-# Люстры и светильники (второй уровень сортировки)
 LAMP_KEYWORDS = [
     'люстра', 'люстр', 'потолочный', 'бра', 'светильник',
     'светильник потолочный', 'подвесной', 'торшер', 'спот', 'ночник'
 ]
+
 # ==================== ЧЁРНЫЙ СПИСОК ====================
 def load_blacklist():
     blacklist = set()
@@ -58,22 +58,38 @@ def check_status(status):
         return False
     if s.startswith('открыт к заказам'):
         return True
-    return True 
+    return True
+
+# НОВАЯ ФУНКЦИЯ: проверка на "Распродажа и вывод"
+def is_clearance(status):
+    if pd.isna(status):
+        return False
+    s = str(status).strip().lower()
+    return 'распродажа' in s and 'вывод' in s
 
 def get_priority(row):
     rating = row['Рейтинг_число']
     prev_rating = row['Предыдущий_рейтинг_число']
     reviews = row['Отзывы_число']
+    clearance = row.get('is_clearance', False)
     
+    # Приоритет 1: низкий рейтинг
     if pd.notna(rating) and rating <= 3.9:
         return 1
+    
+    # Приоритет 2: спад рейтинга
     if pd.notna(rating) and rating >= 4.0 and pd.notna(prev_rating) and rating < prev_rating:
         return 2
-    if pd.notna(rating) and rating <= 4.5 and (pd.isna(reviews) or reviews <= 5):
+    
+    # Приоритет 3: ≤4.5 + мало отзывов (теперь < 3)
+    if pd.notna(rating) and rating <= 4.5 and (pd.isna(reviews) or reviews < 3):
         return 3
+    
+    # Приоритет 4: риск/сезон
     if (pd.isna(rating) or rating > 4.3) and (pd.isna(reviews) or reviews <= 1):
         return 4
-    return 99 
+    
+    return 99
 
 def get_recommendation(row):
     rating = row['Рейтинг_число']
@@ -85,7 +101,7 @@ def get_recommendation(row):
     return "✅ Стандартная проработка"
 
 # ==================== ИНТЕРФЕЙС ====================
-import streamlit as st
+st.set_page_config(page_title="Аналитика Рейтингов 4.5+", layout="wide")
 
 st.markdown("""
 <style>
@@ -97,8 +113,6 @@ h1 {
     text-align: center;
     font-size: 2.2rem !important;
 }
-
-/* Улучшенная кнопка загрузки */
 .stFileUploader > div:first-child {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     border: 2px solid #4a4a6a;
@@ -106,13 +120,11 @@ h1 {
     padding: 24px 32px;
     transition: all 0.3s ease;
 }
-
 .stFileUploader > div:first-child:hover {
     border-color: #ff6b35;
     box-shadow: 0 4px 20px rgba(255, 107, 53, 0.2);
     transform: translateY(-2px);
 }
-
 .stFileUploader button {
     background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%) !important;
     color: white !important;
@@ -123,7 +135,6 @@ h1 {
     border: none !important;
     box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4) !important;
 }
-
 .stFileUploader button:hover {
     box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6) !important;
     transform: translateY(-2px) !important;
@@ -133,7 +144,6 @@ h1 {
 
 st.markdown("<h1>Автоматизация отбора артикулов для работы с рейтингом</h1>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: center; font-size: 2rem; margin-top: -10px;'>⚡</div>", unsafe_allow_html=True)
-
 st.markdown("<br>", unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader("", type=['csv', 'xlsx'], label_visibility="collapsed")
@@ -143,9 +153,9 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Два фото рядом
 col1, col2 = st.columns(2)
 with col1:
-    st.image("logo.png", width=700)
+    st.image("logo.png", width=500)
 with col2:
-    st.image("второе_фото.png", width=700)
+    st.image("второе_фото.png", width=500)
 
 if uploaded_file is not None:
     try:
@@ -176,46 +186,60 @@ if uploaded_file is not None:
                 df['Рейтинг_число'] = df['Рейтинг'].apply(clean_numeric)
                 df['Отзывы_число'] = df['Кол-во отзывов'].apply(clean_numeric)
                 df['Предыдущий_рейтинг_число'] = df['Предыдущий рейтинг'].apply(clean_numeric)
+                
+                # НОВАЯ КОЛОНКА: является ли статус "Распродажа и вывод"
+                df['is_clearance'] = df['Статус'].apply(is_clearance)
 
+                # Фильтрация по статусу
                 df_filtered = df[df['Статус'].apply(check_status)].copy()
+                
+                # Фильтрация по площадкам
                 df_filtered = df_filtered[df_filtered['Площадка'].astype(str).str.strip().str.lower().isin(VALID_PLATFORMS)]
+                
+                # Фильтрация по чёрному списку
                 df_filtered = df_filtered[~df_filtered['Артикул поставщика'].isin(BLACKLIST)]
 
+                # НОВАЯ ФИЛЬТРАЦИЯ: для "Распродажа и вывод" — только если отзывы ≤ 2
+                def should_include_clearance(row):
+                    if row['is_clearance']:
+                        # Если это распродажа — берём только если отзывы ≤ 2 и рейтинг низкий
+                        reviews = row['Отзывы_число']
+                        rating = row['Рейтинг_число']
+                        if pd.notna(reviews) and reviews > 2:
+                            return False
+                        if pd.notna(rating) and rating > 3.9:
+                            return False
+                    return True
+
+                df_filtered = df_filtered[df_filtered.apply(should_include_clearance, axis=1)]
+
+                # Приоритеты
                 df_filtered['Приоритет'] = df_filtered.apply(get_priority, axis=1)
                 df_problems = df_filtered[df_filtered['Приоритет'] <= 4].copy()
 
                 if df_problems.empty:
                     st.warning("⚠️ Проблемных артикулов не обнаружено.")
                 else:
+                    # Группировка по артикулу
                     sku_priority = df_problems.groupby('Артикул поставщика')['Приоритет'].min().reset_index()
                     sku_priority.rename(columns={'Приоритет': 'Финальный_Приоритет'}, inplace=True)
                     df_problems = df_problems.merge(sku_priority, on='Артикул поставщика')
                     df_problems['Приоритет'] = df_problems['Финальный_Приоритет']
 
+                    # Сезонность
                     df_problems['Сезонный'] = df_problems['Наименование'].astype(str).str.lower().apply(
                         lambda name: any(kw in name for kw in SEASONAL_KEYWORDS)
                     )
 
-                                        # Сезонность
-                    df_problems['Сезонный'] = df_problems['Наименование'].astype(str).str.lower().apply(
-                        lambda name: any(kw in name for kw in SEASONAL_KEYWORDS)
-                    )
-
-                    # Новая сортировка для приоритета 4
+                    # Сортировка приоритета 4
                     def get_sort_key(row):
                         if row['Приоритет'] != 4:
                             return 0
                         name = str(row['Наименование']).lower()
-                        
-                        # 1. Сезонные товары (весна-лето)
                         if any(kw in name for kw in SEASONAL_KEYWORDS):
                             return 1
-                        
-                        # 2. Люстры и светильники
                         if any(kw in name for kw in LAMP_KEYWORDS):
                             return 2
-                        
-                        # 3. Остальное
                         return 3
 
                     df_problems['Сортировка_4'] = df_problems.apply(get_sort_key, axis=1)
@@ -227,9 +251,10 @@ if uploaded_file is not None:
                         inplace=True
                     )
 
-                    unique_skus = df_problems['Артикул поставщика'].unique()[:150]
-                    final_df = df_problems[df_problems['Артикул поставщика'].isin(unique_skus)].copy()
+                    # НОВЫЙ ЛИМИТ: максимум 100 проблемных площадок (не уникальных артикулов)
+                    final_df = df_problems.head(100).copy()
 
+                    # Рекомендации
                     final_df['Рекомендация'] = final_df.apply(get_recommendation, axis=1)
 
                     # ==================== ДАШБОРД ====================
@@ -242,11 +267,11 @@ if uploaded_file is not None:
                     with col2:
                         st.metric("🟠 Приоритет 2 (спад)", len(final_df[final_df['Приоритет'] == 2]))
                     with col3:
-                        st.metric("🟡 Приоритет 3 (≤4.5 + мало отзывов)", len(final_df[final_df['Приоритет'] == 3]))
+                        st.metric("🟡 Приоритет 3 (≤4.5 + <3 отзывов)", len(final_df[final_df['Приоритет'] == 3]))
                     with col4:
                         st.metric("🔵 Приоритет 4 (риск/сезон)", len(final_df[final_df['Приоритет'] == 4]))
 
-                    st.write(f"**Всего уникальных артикулов в работе:** {len(unique_skus)} | **Исключено из чёрного списка:** {len(BLACKLIST)}")
+                    st.write(f"**Всего проблемных площадок в работе:** {len(final_df)} | **Исключено из чёрного списка:** {len(BLACKLIST)}")
 
                     # ==================== ТАБЛИЦА ====================
                     st.markdown("---")
@@ -255,7 +280,6 @@ if uploaded_file is not None:
                     display_cols = required_cols + ['Приоритет', 'Сезонный', 'Рекомендация']
                     output_df = final_df[display_cols].copy()
 
-                    # Цветовая индикация через эмодзи
                     def add_color_emoji(p):
                         if p == 1:
                             return "🔴 1"
